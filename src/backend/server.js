@@ -607,7 +607,7 @@ app.put('/user/:id', async (req, res) => {
 // Récupérer tous les utilisateurs
 // =========================
 
-app.get('/users', async (req, res) => {
+app.post('/users', async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT
