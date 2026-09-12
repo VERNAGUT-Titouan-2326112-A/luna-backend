@@ -603,11 +603,12 @@ app.put('/user/:id', async (req, res) => {
   }
 });
 
+
 // =========================
 // Récupérer tous les utilisateurs
 // =========================
 
-app.post('/users', async (req, res) => {
+app.get('/users', async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT
@@ -627,7 +628,7 @@ app.post('/users', async (req, res) => {
 
     res.json(result.rows);
   } catch (error) {
-    console.error(error);
+    console.error('Erreur récupération utilisateurs :', error);
 
     res.status(500).json({
       error: 'Impossible de récupérer les utilisateurs',
