@@ -8,7 +8,7 @@ import { PrimaryButton } from '@/components/primary-button';
 import { TextField } from '@/components/text-field';
 import { Palette, Spacing } from '@/constants/theme';
 
-const API_URL = 'http://192.168.1.36:3000';
+const API_URL = 'https://luna-backend-latest-n28j.onrender.com';
 
 export default function RegisterScreen() {
   const [step, setStep] = useState(1);

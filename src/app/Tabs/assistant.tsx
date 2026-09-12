@@ -22,7 +22,7 @@ type Message = {
   fromUser: boolean;
 };
 
-const API_URL = 'http://192.168.1.36:3000';
+const API_URL = 'https://luna-backend-latest-n28j.onrender.com';
 
 export default function AssistantScreen() {
   const [message, setMessage] = useState('');
