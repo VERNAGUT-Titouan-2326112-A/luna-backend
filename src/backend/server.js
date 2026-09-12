@@ -604,6 +604,38 @@ app.put('/user/:id', async (req, res) => {
 });
 
 // =========================
+// Récupérer tous les utilisateurs
+// =========================
+
+app.get('/users', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        id,
+        first_name,
+        last_name,
+        birth_date,
+        weight,
+        height,
+        last_period_start,
+        cycle_length,
+        period_length,
+        email
+      FROM users
+      ORDER BY id
+    `);
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      error: 'Impossible de récupérer les utilisateurs',
+    });
+  }
+});
+
+// =========================
 // SERVEUR
 // =========================
 

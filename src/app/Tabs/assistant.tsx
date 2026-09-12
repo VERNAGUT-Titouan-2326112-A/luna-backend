@@ -60,6 +60,8 @@ export default function AssistantScreen() {
     }, 100);
 
     try {
+      console.log('1️⃣ Envoi vers :', `${API_URL}/chat`);
+    
       const response = await fetch(`${API_URL}/chat`, {
         method: 'POST',
         headers: {
@@ -69,40 +71,49 @@ export default function AssistantScreen() {
           message: userMessage,
         }),
       });
-
+    
+      console.log('2️⃣ Status HTTP :', response.status);
+      console.log('3️⃣ OK :', response.ok);
+    
       const data = await response.json();
-
+    
+      console.log('4️⃣ Réponse JSON :', data);
+    
       if (!response.ok) {
         throw new Error(data.error || 'Erreur serveur');
       }
-
+    
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         text: data.response,
         fromUser: false,
       };
-
+    
+      console.log('5️⃣ Message IA :', aiMessage);
+    
       setMessages((current) => [...current, aiMessage]);
-
+    
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: true });
       }, 100);
-
+    
     } catch (error) {
-      console.error('Erreur:', error);
-
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: "Désolée, je n'arrive pas à répondre pour le moment. Vérifie que le serveur Luna est bien lancé.",
-        fromUser: false,
-      };
-
-      setMessages((current) => [...current, errorMessage]);
-
-      setTimeout(() => {
-        flatListRef.current?.scrollToEnd({ animated: true });
-      }, 100);
-
+      console.error('❌ ERREUR CHAT COMPLETE :', error);
+    
+      const errorText =
+        error instanceof Error
+          ? error.message
+          : String(error);
+    
+      setMessages((current) => [
+        ...current,
+        {
+          id: (Date.now() + 1).toString(),
+          text: `Erreur technique : ${errorText}`,
+          fromUser: false,
+        },
+      ]);
+    
     } finally {
       setLoading(false);
     }

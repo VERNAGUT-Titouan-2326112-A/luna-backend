@@ -1,8 +1,17 @@
 import { Palette } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
+import { useFonts } from 'expo-font';
 import { Tabs } from 'expo-router';
 
-export default function TabsLayout() {
+export default function RootLayout() {
+  const [fontsLoaded] = useFonts({
+    ...Ionicons.font,
+  });
+
+  if (!fontsLoaded) {
+    return null;
+  }
+
   return (
     <Tabs
       screenOptions={{

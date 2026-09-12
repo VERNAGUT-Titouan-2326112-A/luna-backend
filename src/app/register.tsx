@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -94,20 +95,26 @@ export default function RegisterScreen() {
   async function handleRegister() {
     setError('');
 
+    // Vérification des mots de passe
     if (password !== confirmPassword) {
       setError('Les mots de passe ne correspondent pas.');
       return;
     }
 
+    // Vérification de la date de naissance
     const formattedBirthDate = convertDateToPostgres(birthDate);
-    const formattedLastPeriodStart =
-      convertDateToPostgres(lastPeriodStart);
 
     if (!formattedBirthDate) {
       setStep(1);
-      setError('La date de naissance doit être au format JJ/MM/AAAA.');
+      setError(
+        'La date de naissance doit être au format JJ/MM/AAAA.'
+      );
       return;
     }
+
+    // Vérification de la date des dernières règles
+    const formattedLastPeriodStart =
+      convertDateToPostgres(lastPeriodStart);
 
     if (!formattedLastPeriodStart) {
       setStep(2);
@@ -117,8 +124,8 @@ export default function RegisterScreen() {
       return;
     }
 
+    // Vérification de la durée du cycle
     const cycleLengthNumber = Number(cycleLength);
-    const periodLengthNumber = Number(periodLength);
 
     if (
       Number.isNaN(cycleLengthNumber) ||
@@ -126,9 +133,14 @@ export default function RegisterScreen() {
       cycleLengthNumber > 60
     ) {
       setStep(2);
-      setError('La durée du cycle doit être comprise entre 15 et 60 jours.');
+      setError(
+        'La durée du cycle doit être comprise entre 15 et 60 jours.'
+      );
       return;
     }
+
+    // Vérification de la durée des règles
+    const periodLengthNumber = Number(periodLength);
 
     if (
       Number.isNaN(periodLengthNumber) ||
@@ -136,7 +148,37 @@ export default function RegisterScreen() {
       periodLengthNumber > 15
     ) {
       setStep(2);
-      setError('La durée des règles doit être comprise entre 1 et 15 jours.');
+      setError(
+        'La durée des règles doit être comprise entre 1 et 15 jours.'
+      );
+      return;
+    }
+
+    // Conversion du poids
+    const weightNumber = weight
+      ? Number(weight.replace(',', '.'))
+      : null;
+
+    if (
+      weight &&
+      (Number.isNaN(weightNumber))
+    ) {
+      setStep(1);
+      setError('Le poids renseigné est invalide.');
+      return;
+    }
+
+    // Conversion de la taille
+    const heightNumber = height
+      ? Number(height)
+      : null;
+
+    if (
+      height &&
+      (Number.isNaN(heightNumber))
+    ) {
+      setStep(1);
+      setError('La taille renseignée est invalide.');
       return;
     }
 
@@ -152,31 +194,83 @@ export default function RegisterScreen() {
           firstName,
           lastName,
           birthDate: formattedBirthDate,
-          weight,
-          height,
+          weight: weightNumber,
+          height: heightNumber,
           lastPeriodStart: formattedLastPeriodStart,
           cycleLength: cycleLengthNumber,
           periodLength: periodLengthNumber,
-          email,
+          email: email.trim().toLowerCase(),
           password,
         }),
       });
 
-      const data = await response.json();
+      // On récupère d'abord la réponse brute
+      const text = await response.text();
 
+      console.log('REGISTER STATUS:', response.status);
+      console.log('REGISTER RESPONSE:', text);
+
+      let data;
+
+      try {
+        data = JSON.parse(text);
+      } catch {
+        data = {};
+      }
+
+      // Erreur du serveur
       if (!response.ok) {
         setError(
-          data.error || 'Erreur lors de la création du compte.'
+          data.error ||
+            'Erreur lors de la création du compte.'
         );
+        return;
+      }
+
+      // Vérification de la réponse
+      if (!data.user) {
+        console.error(
+          'La réponse du serveur ne contient pas data.user'
+        );
+
+        setError(
+          'Le compte a été créé mais les informations utilisateur sont introuvables.'
+        );
+
         return;
       }
 
       console.log('Compte créé :', data.user);
 
+      /*
+       * IMPORTANT :
+       *
+       * On sauvegarde le nouvel utilisateur dans AsyncStorage.
+       *
+       * HomeScreen utilise "luna-user" pour savoir
+       * quel utilisateur est actuellement connecté.
+       */
+      await AsyncStorage.setItem(
+        'luna-user',
+        JSON.stringify(data.user)
+      );
+
+      console.log(
+        'Utilisateur enregistré dans AsyncStorage :',
+        data.user.id
+      );
+
+      // Redirection vers l'accueil
       router.replace('/Tabs/home');
     } catch (error) {
-      console.error('Erreur inscription :', error);
-      setError('Impossible de contacter le serveur.');
+      console.error(
+        'Erreur inscription :',
+        error
+      );
+
+      setError(
+        'Impossible de contacter le serveur.'
+      );
     } finally {
       setLoading(false);
     }
@@ -206,7 +300,9 @@ export default function RegisterScreen() {
 
       {error !== '' && (
         <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{error}</Text>
+          <Text style={styles.errorText}>
+            {error}
+          </Text>
         </View>
       )}
 
@@ -280,7 +376,8 @@ export default function RegisterScreen() {
           </Text>
 
           <Text style={styles.stepSubtitle}>
-            Ces informations permettent à Luna d'estimer ton cycle.
+            Ces informations permettent à Luna
+            d'estimer ton cycle.
           </Text>
 
           <TextField
@@ -333,7 +430,8 @@ export default function RegisterScreen() {
           </Text>
 
           <Text style={styles.stepSubtitle}>
-            Choisis tes identifiants pour pouvoir retrouver ton suivi.
+            Choisis tes identifiants pour pouvoir
+            retrouver ton suivi.
           </Text>
 
           <TextField
@@ -352,6 +450,7 @@ export default function RegisterScreen() {
             value={password}
             onChangeText={(value) => {
               setPassword(value);
+
               if (error) {
                 setError('');
               }
@@ -367,6 +466,7 @@ export default function RegisterScreen() {
             value={confirmPassword}
             onChangeText={(value) => {
               setConfirmPassword(value);
+
               if (error) {
                 setError('');
               }
